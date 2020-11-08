@@ -12,18 +12,23 @@ export default class ProyectosLst extends React.Component {
 
 	componentDidMount(){
 		$.ajax({
-			url: 'http://localhost:3004/proyectos',
+			url: 'http://localhost:3004/proyectos/',
 			dataType: 'json',
 			cache: false,
-			success: function(data){
-				this.setState({proyectos: data})
-			}.bind(this)
-		})
+			method: 'get'
+		}).done(function(data){
+			this.setState({
+				proyectos: data
+			})
+		}.bind(this)).fail(function(jqXHR, textStatus, errorThrown){
+			console.log(jqXHR)
+			alert(errorThrown)
+		})	
 	}
 
 	render(){
 		const proyectos = this.state.proyectos.map(function({id, nombre, desc}){
-			return <ListGroup.Item action href={'/proyectos/'+id} key={id}>{id} - {nombre}</ListGroup.Item>
+			return <ListGroup.Item action href={'/proyecto/show/'+id} key={id}>{id} - {nombre}</ListGroup.Item>
 		})
 
 		return(
@@ -33,7 +38,7 @@ export default class ProyectosLst extends React.Component {
 						<h4>Mis Proyectos</h4>
 					</div>
 					<div className="col">
-						<Button href="/proyectos/new" className="btn-nuevo">Nuevo</Button>
+						<Button href="/proyecto/new/0" className="btn-nuevo">Nuevo</Button>
 					</div>
 				</div>
 				<ListGroup>

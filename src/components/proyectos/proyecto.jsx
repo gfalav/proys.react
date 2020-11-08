@@ -22,32 +22,69 @@ export default class Proyecto extends React.Component{
 
 		this.handleInputChange = this.handleInputChange.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
-		this.handleEdit = this.handleEdit.bind(this);
+		this.ajaxRead = this.ajaxRead.bind(this);
+		this.ajaxSave = this.ajaxSave.bind(this);
 	}
 
 	componentDidMount(){
-		if (this.props.match.params.id === 'new') {
-			this.setState({readOnly: false})
-		} else {
-			$.ajax({
-				url: 'http://localhost:3004/proyectos/'+this.props.match.params.id,
-				dataType: 'json',
-				cache: false,
-				success: function(data){
-					this.setState({
-						nombre: data.nombre,
-						desc: data.desc,
-						proyectista: data.proyectista,
-						comitente: data.comitente,
-						contratista: data.contratista,
-						expediente: data.expediente,
-						ubicacion: data.ubicacion,
-						created_at: data.created_at,
-						userId: data.userId
-					})
-				}.bind(this)
-			})
+		switch (this.props.match.params.action){
+			case 'new':
+				this.setState({readOnly: false})
+				break
+			case 'show':
+				this.setState({readOnly: true})
+				this.ajaxRead(this.props.match.params.id)
+				break
+			case 'edit':
+				this.setState({readOnly: false})
+				this.ajaxRead(this.props.match.params.id)
+				break
+			default:
+				break
 		}
+	}
+
+	ajaxRead(id){
+		$.ajax({
+			url: 'http://localhost:3004/proyectos/' + id,
+			dataType: 'json',
+			cache: false,
+			method: 'get'
+		}).done(function(data){
+			this.setState({
+				nombre: data.nombre,
+				desc: data.desc,
+				proyectista: data.proyectista,
+				comitente: data.comitente,
+				contratista: data.contratista,
+				expediente: data.expediente,
+				ubicacion: data.ubicacion,
+				created_at: data.created_at,
+				userId: data.userId
+			})
+		}.bind(this)).fail(function(jqXHR, textStatus, errorThrown){
+			alert(textStatus)
+		})	
+	}
+
+	ajaxSave(id){
+		$.ajax({
+			url: 'http://localhost:3004/proyectos/' + id,
+			dataType: 'json',
+			cache: false,
+			data: this.state,
+			method: function(){
+				if (this.props.match.params.action === 'new'){
+					return 'post'
+				} else {
+					return 'put'
+				}
+			}
+		}).done(function(data){
+			alert('OK')
+		}).fail(function(jqXHR, textStatus, errorThrown){
+			alert(textStatus)
+		})	
 	}
 
 	handleInputChange(event) {
@@ -59,15 +96,16 @@ export default class Proyecto extends React.Component{
 
 	handleSubmit(event) {
 	    event.preventDefault();
-	    this.setState({readOnly: true})
-	}
+	    if (this.props.match.params.action === 'new'){
+	    	this.ajaxSave('')
+	    } else {
+	    	this.ajaxSave(this.props.match.params.id)
+	    }
 
-	handleEdit(event){
-		event.preventDefault();
-		this.setState({readOnly: false})
 	}
 
 	render(){
+		const editPath = '/proyecto/edit/' + this.props.match.params.id
 
 		return(
 			<div>
@@ -101,10 +139,10 @@ export default class Proyecto extends React.Component{
 					    <Form.Label>Ubicación</Form.Label>
 					    <Form.Control type="text" size="sm" value={this.state.ubicacion} onChange={this.handleInputChange} readOnly={this.state.readOnly}/>
 				  	</Form.Group>
-				  	<Button variant="danger" type="submit" disabled={this.state.readOnly}>Submit</Button>
+				  	{!this.state.readOnly && <Button variant="danger" type="submit" disabled={this.state.readOnly}>Submit</Button>}
 				</Form>
 				<Button href="/proyectos" className="btn-volver">Volver</Button>
-				<Button variant="warning" className="btn-volver" disabled={!this.state.readOnly} onClick={this.handleEdit}>Editar</Button>
+				{this.state.readOnly && <Button href={editPath} variant="warning" className="btn-volver">Editar</Button>}
 			</div>
 		)
 	}
